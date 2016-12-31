@@ -65,7 +65,6 @@ func TestRandomizeCore(t *testing.T) {
 	}
 }
 
-
 func TestProcessCore(t *testing.T) {
 	core := MakeCore(3, 1)
 	core[0][0] = 1.0
@@ -169,4 +168,3 @@ func TestLayer_ProcessKeepOutputs(t *testing.T) {
 		t.Errorf("Expected 0.5 but got %d", l.Outputs[0])
 	}
 }
-

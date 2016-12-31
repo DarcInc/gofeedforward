@@ -28,8 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package gofeedforward
 
 import (
-	"math/rand"
 	"fmt"
+	"math/rand"
 )
 
 // Core is a square array of values used as weights
@@ -38,7 +38,7 @@ type Core [][]float64
 // Layer is a layer in a network
 type Layer struct {
 	Weights Core
-	Inputs []float64
+	Inputs  []float64
 	Outputs []float64
 }
 
@@ -85,8 +85,8 @@ func (c Core) OutputSize() int {
 }
 
 // MakeLayer creates a new layer
-func MakeLayer(inputs, outputs int ) Layer {
-	return Layer{Weights: MakeCore(inputs + 1, outputs)}
+func MakeLayer(inputs, outputs int) Layer {
+	return Layer{Weights: MakeCore(inputs+1, outputs)}
 }
 
 // Process processes the inputs for a given layer

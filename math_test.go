@@ -28,12 +28,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package gofeedforward
 
 import (
-	"testing"
 	"math"
+	"testing"
 )
 
 func outOfBoundsCheck(expected, actual, bound float64) bool {
-	return math.Abs(expected - actual) > bound
+	return math.Abs(expected-actual) > bound
 }
 
 func TestSigmoid(t *testing.T) {

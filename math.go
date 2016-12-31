@@ -28,8 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package gofeedforward
 
 import (
-	"math"
 	"fmt"
+	"math"
 )
 
 // Sigmoid is a standard sigmoid squashing function
