@@ -32,14 +32,17 @@ import (
 	"fmt"
 )
 
+// Core is a square array of values used as weights
 type Core [][]float64
 
+// Layer is a layer in a network
 type Layer struct {
 	Weights Core
 	Inputs []float64
 	Outputs []float64
 }
 
+// MakeCore creates a new array of weights
 func MakeCore(inputs, outputs int) Core {
 	core := make([][]float64, outputs)
 	for i := 0; i < outputs; i++ {
@@ -48,6 +51,7 @@ func MakeCore(inputs, outputs int) Core {
 	return core
 }
 
+// Randomize randomizes the set of weights
 func (c Core) Randomize() {
 	for _, out := range c {
 		for i := range out {
@@ -56,6 +60,7 @@ func (c Core) Randomize() {
 	}
 }
 
+// Process takes a set of inputs and produces a set of outputs
 func (c Core) Process(inputs []float64) ([]float64, error) {
 	result := make([]float64, len(c))
 
@@ -69,18 +74,22 @@ func (c Core) Process(inputs []float64) ([]float64, error) {
 	return result, nil
 }
 
+// InputSize returns the input size for a set of weights
 func (c Core) InputSize() int {
 	return len(c[0])
 }
 
+// OutputSize returns the output size for a set of weights
 func (c Core) OutputSize() int {
 	return len(c)
 }
 
+// MakeLayer creates a new layer
 func MakeLayer(inputs, outputs int ) Layer {
 	return Layer{Weights: MakeCore(inputs + 1, outputs)}
 }
 
+// Process processes the inputs for a given layer
 func (l *Layer) Process(inputs []float64) ([]float64, error) {
 	l.Inputs = inputs
 
@@ -94,6 +103,7 @@ func (l *Layer) Process(inputs []float64) ([]float64, error) {
 	return outputs, nil
 }
 
+// Randomize randomizes the weights in a layer
 func (l *Layer) Randomize() {
 	l.Weights.Randomize()
 }
