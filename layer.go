@@ -28,23 +28,72 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package gofeedforward
 
 import (
-	"math"
+	"math/rand"
 	"fmt"
 )
 
-func Sigmoid(input float64) float64 {
-	return 1.0 / (1.0 + math.Exp(-input))
+type Core [][]float64
+
+type Layer struct {
+	Weights Core
+	Inputs []float64
+	Outputs []float64
 }
 
-func DotProduct(left, right []float64) (float64, error) {
-	if len(left) != len(right) {
-		return math.NaN(), fmt.Errorf("Dot product arguments are of different length: %d vs %d",
-			len(left), len(right))
+func MakeCore(inputs, outputs int) Core {
+	core := make([][]float64, outputs)
+	for i := 0; i < outputs; i++ {
+		core[i] = make([]float64, inputs)
+	}
+	return core
+}
+
+func (c Core) Randomize() {
+	for _, out := range c {
+		for i := range out {
+			out[i] = rand.Float64()
+		}
+	}
+}
+
+func (c Core) Process(inputs []float64) ([]float64, error) {
+	result := make([]float64, len(c))
+
+	for idx := range c {
+		if len(c[idx]) != len(inputs) {
+			return result, fmt.Errorf("Expected %d inputs but got %d inputs", len(c[idx]), len(inputs))
+		}
+		result[idx], _ = DotProduct(inputs, c[idx])
 	}
 
-	sum := 0.0
-	for i := 0; i < len(left); i++ {
-		sum += left[i] * right[i]
+	return result, nil
+}
+
+func (c Core) InputSize() int {
+	return len(c[0])
+}
+
+func (c Core) OutputSize() int {
+	return len(c)
+}
+
+func MakeLayer(inputs, outputs int ) Layer {
+	return Layer{Weights: MakeCore(inputs + 1, outputs)}
+}
+
+func (l *Layer) Process(inputs []float64) ([]float64, error) {
+	l.Inputs = inputs
+
+	biasedInputs := append(inputs, 1.0)
+	outputs, _ := l.Weights.Process(biasedInputs)
+	for idx := range outputs {
+		outputs[idx] = Sigmoid(outputs[idx])
 	}
-	return sum, nil
+	l.Outputs = outputs
+
+	return outputs, nil
+}
+
+func (l *Layer) Randomize() {
+	l.Weights.Randomize()
 }
