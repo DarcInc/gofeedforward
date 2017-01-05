@@ -168,12 +168,12 @@ func (t *Trainer) RequestTermination() {
 // than the minimum error.  If either of these conditions are met, then the callback
 // requests termination.
 func (t *Trainer) AddSimpleStoppingCriteria(maxIter int, minErr float64) {
-	t.AddIterationEndHandler(func(t *Trainer, sse SumOfSquaredErrors, iter int, err error) {
+	t.AddIterationEndHandler(func(t *Trainer, mse SumOfSquaredErrors, iter int, err error) {
 		if iter > maxIter {
 			t.RequestTermination()
 		}
 
-		if sse.Combine() < minErr {
+		if mse.Combine() < minErr {
 			t.RequestTermination()
 		}
 	})
