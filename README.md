@@ -15,25 +15,48 @@ from a set of known samples.
 See [Backpropagation on Wikipedia](https://en.wikipedia.org/wiki/Backpropagation)
 for a fairly detailed discussion of the principles of backpropagation.
 
-## Creating a network layer
-A network is composed of layers.  A layer is responsible for taking a set of 
-inputs and producing a set of outputs.  
+## Creating a network
+Creating a network is relatively simple.  The <code>MakeNetwork</code> function
+creates a network and all its internal layers.
 
 ```golang
-layer := gofeedforward.MakeLayer(3, 2)
+network := MakeNetwork(2, 4, 1)
+network.Randomize()
 ```
 
-This creates a layer with three inputs and 2 outputs.  At first blush this 
-would seemd to be 6 weights.  However, because the network inputs need to be
-biased, there are actual 8 weights.  When the data is presented to the 
-layer an implicit 1 is added to the array of inputs.
+This code will create a network with two input neurons, 1 output neuron, and 4
+neurons in the hidden layer.  This is actually 15 weights, as both the hidden 
+layer and the output layer are biased.  Once the network is created, it must be
+randomized to set the neruons to a random value between -0.5 to 0.5.
 
-## Presenting data to the network layer
-A layer is presnted data through a slice of <code>float64</code> values.
+## Training a network
+The next step is training the network.  This requires a set of training examples
+and some traing parameters (the most significant of which is alpha - the learning
+rate).  For example, the "xor" function can be expressed by the following code:
 
 ```golang
-output, err := layer.Process([]float64{0.25, 0.35, 0.75})
-if err != nil {
-    ...
-}
+td := TrainingData{
+		TrainingDatum{Inputs: []float64{1.0, 0.0}, Expected: []float64{1.0}},
+		TrainingDatum{Inputs: []float64{0.0, 1.0}, Expected: []float64{1.0}},
+		TrainingDatum{Inputs: []float64{0.0, 0.0}, Expected: []float64{0.0}},
+		TrainingDatum{Inputs: []float64{1.0, 1.0}, Expected: []float64{0.0}},
+	}
 ```
+
+Xor is a good demonstration of a training data set because the classes cannot be
+linearly separated.  Perceptrons (or basically single layer networks) cannot 
+learn non-linearly separable functions.  
+
+The trainer is initialized using as a struct.  Training will run forever unless there
+is a stoping critera defined.  As a convenience function, <code>AddSimpleStoppingCriteria</code>
+will terminate training once either the number of iterations is reached or the mean
+squared error falls below a certain theshold.  It is also possible to register an 
+end of iteration callback and use some other critera for stopping.
+
+```golang 
+trainer := Trainer{}
+trainer.AddSimpleStoppingCriteria(50000, 0.01)
+trainer.Train(&network, td)
+```
+
+Finally, the call to <code>Train</code> will train the network. 
