@@ -36,16 +36,23 @@ rate).  For example, the "xor" function can be expressed by the following code:
 
 ```golang
 td := TrainingData{
-		TrainingDatum{Inputs: []float64{1.0, 0.0}, Expected: []float64{1.0}},
-		TrainingDatum{Inputs: []float64{0.0, 1.0}, Expected: []float64{1.0}},
-		TrainingDatum{Inputs: []float64{0.0, 0.0}, Expected: []float64{0.0}},
-		TrainingDatum{Inputs: []float64{1.0, 1.0}, Expected: []float64{0.0}},
+		TrainingDatum{Inputs: []float64{1.0, 0.0}, Expected: []float64{0.9}},
+		TrainingDatum{Inputs: []float64{0.0, 1.0}, Expected: []float64{0.9}},
+		TrainingDatum{Inputs: []float64{0.0, 0.0}, Expected: []float64{0.1}},
+		TrainingDatum{Inputs: []float64{1.0, 1.0}, Expected: []float64{0.1}},
 	}
 ```
 
 Xor is a good demonstration of a training data set because the classes cannot be
 linearly separated.  Perceptrons (or basically single layer networks) cannot 
 learn non-linearly separable functions.  
+
+Note that the expected values are in the range of 0.1 to 0.9.  That's because the 
+output of the network is "squashed" by the transfer function (a differentiable 
+function that keeps the output in a specifc range like 0.0 to 1.0).  This network uses
+the standard [sigmoid](https://en.wikipedia.org/wiki/Sigmoid_function) function so 
+the output will never reach either 0.0 or 1.0.  Instead the expected values are 0.1 and
+0.9.
 
 The trainer is initialized using as a struct.  Training will run forever unless there
 is a stoping critera defined.  As a convenience function, <code>AddSimpleStoppingCriteria</code>
