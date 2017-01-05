@@ -37,12 +37,16 @@ import (
 // estimated observations.
 type SumOfSquaredErrors []float64
 
-// Sigmoid is a standard sigmoid squashing function
+// Sigmoid is a standard sigmoid squashing function.  It will produce an output
+// value between 0.0 and 1.0.  Very large positive inputs will produce a value very near 1.0
+// and very large negative inputs will produce a value near 0.0.  The output
+// of the Sigmoid at 0.0 is 0.5.
 func Sigmoid(input float64) float64 {
 	return 1.0 / (1.0 + math.Exp(-input))
 }
 
-// DotProduct calculates a dot-product of two arrays
+// DotProduct calculates a dot-product of two arrays.  Both array must be of
+// the same size.
 func DotProduct(left, right []float64) (float64, error) {
 	if len(left) != len(right) {
 		return math.NaN(), fmt.Errorf("Dot product arguments are of different length: %d vs %d",

@@ -33,17 +33,22 @@ import (
 	"math/rand"
 )
 
-// Core is a square array of values used as weights
+// Core is a square array of values used as weights or other m x n values.  The
+// rule of thumb is that inputs are the columns and rows are the outputs.  So
+// a set of weights for 3 inputs and 2 outputs would be a [2][3]float64 two
+// dimensional array.
 type Core [][]float64
 
-// Layer is a layer in a network
+// Layer is a layer in a network and is composed of the weights, the last set of
+// inputs presented tot he weights and the last output produced by the weights.
 type Layer struct {
 	Weights Core
 	Inputs  []float64
 	Outputs []float64
 }
 
-// MakeCore creates a new array of weights
+// MakeCore creates a new two dimensional array of values.  if inputs are set to
+// 3 and outputs are set to 2, this will produce a [2][3]float64 array.
 func MakeCore(inputs, outputs int) Core {
 	core := make([][]float64, outputs)
 	for i := 0; i < outputs; i++ {
@@ -52,7 +57,9 @@ func MakeCore(inputs, outputs int) Core {
 	return core
 }
 
-// Randomize randomizes the set of weights
+// Randomize randomizes the set of weights to be values between 0.5 and -0.5.  Note that
+// it does not initialize Go's random number generator, which must be done
+// in some other setup code.
 func (c Core) Randomize() {
 	for _, out := range c {
 		for i := range out {
@@ -61,7 +68,8 @@ func (c Core) Randomize() {
 	}
 }
 
-// Process takes a set of inputs and produces a set of outputs
+// Process takes a set of inputs and produces a set of outputs.  Core is simply doing
+// matrix multiplication and does not apply the sigmoid fucntion.
 func (c Core) Process(inputs []float64) ([]float64, error) {
 	result := make([]float64, len(c))
 
@@ -75,12 +83,14 @@ func (c Core) Process(inputs []float64) ([]float64, error) {
 	return result, nil
 }
 
-// InputSize returns the input size for a set of weights
+// InputSize returns the input size for a set of weights.  This is the raw size of
+// the 2 dimensional array.
 func (c Core) InputSize() int {
 	return len(c[0])
 }
 
-// OutputSize returns the output size for a set of weights
+// OutputSize returns the output size for a set of weights.  This is the raw size
+// of the two dimensional array.
 func (c Core) OutputSize() int {
 	return len(c)
 }
@@ -102,12 +112,18 @@ func (c Core) Add(other Core) (Core, error) {
 	return result, nil
 }
 
-// MakeLayer creates a new layer
+// MakeLayer creates a new layer.  A layer is has an implicit bias input value
+// of 1.0, so a layer with 5 inputs and 3 outputs actually needs a weight
+// matrix of 3 x 6.
 func MakeLayer(inputs, outputs int) Layer {
 	return Layer{Weights: MakeCore(inputs+1, outputs)}
 }
 
-// Process processes the inputs for a given layer
+// Process processes the inputs for a given layer.  It uses the weights to
+// produce a weighted sum of the inputs and then uses the Sigmoid transfer
+// function to squash the input to a value between 0.0 and 1.0 for each of
+// the output 'neurons.'  The input slice is biased by appending a 1.0 to the
+// input array.
 func (l *Layer) Process(inputs []float64) ([]float64, error) {
 	l.Inputs = inputs
 
@@ -127,7 +143,9 @@ func (l *Layer) Process(inputs []float64) ([]float64, error) {
 	return outputs, nil
 }
 
-// Randomize randomizes the weights in a layer
+// Randomize randomizes the weights in a layer.  It uses Go's internal
+// random number generator and recommends that you initialize the Go random
+// number generator prior to using this function.
 func (l *Layer) Randomize() {
 	l.Weights.Randomize()
 }
