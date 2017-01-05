@@ -25,12 +25,17 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 package gofeedforward
 
 import (
 	"fmt"
 	"math"
 )
+
+// SumOfSquaredErrors represents the squared sum of the errors between actual and
+// estimated observations.
+type SumOfSquaredErrors []float64
 
 // Sigmoid is a standard sigmoid squashing function
 func Sigmoid(input float64) float64 {
@@ -47,6 +52,64 @@ func DotProduct(left, right []float64) (float64, error) {
 	sum := 0.0
 	for i := 0; i < len(left); i++ {
 		sum += left[i] * right[i]
+	}
+	return sum, nil
+}
+
+// SumOfSquaredError calculates the sum of squared errors for the expected and actual
+// values.
+func SumOfSquaredError(expected, actual []float64) (SumOfSquaredErrors, error) {
+	if len(expected) != len(actual) {
+		return nil, fmt.Errorf("Expected length = %d actual length = %d", len(expected), len(actual))
+	}
+
+	sum := SumOfSquaredErrors(make([]float64, len(expected)))
+	for i := 0; i < len(expected); i++ {
+		diff := expected[i] - actual[i]
+		sum[i] += diff * diff
+	}
+
+	return sum, nil
+}
+
+// Accumulate adds the sum of squares error to the given sum of squares error.
+func (sse SumOfSquaredErrors) Accumulate(new SumOfSquaredErrors) {
+	for i := 0; i < len(sse); i++ {
+		sse[i] += new[i]
+	}
+}
+
+// Average divides the sum of squares by a number of degrees of freedom.
+func (sse SumOfSquaredErrors) Average(nexample int) {
+	for i := 0; i < len(sse); i++ {
+		sse[i] = sse[i] / float64(nexample)
+	}
+}
+
+// Combine returns the sum of the sum of squares error.
+func (sse SumOfSquaredErrors) Combine() float64 {
+	sum := 0.0
+	for i := 0; i < len(sse); i++ {
+		sum += sse[i]
+	}
+	return sum
+}
+
+// WeightedCombination adds together the components of the sum of squared errors using the
+// given weights.
+func (sse SumOfSquaredErrors) WeightedCombination(weights []float64) (float64, error) {
+	if len(weights) != len(sse) {
+		return 0.0, fmt.Errorf("Number of weights %d do not equal number of values %d", len(weights), len(sse))
+	}
+
+	totalWeights := 0.0
+	for i := 0; i < len(weights); i++ {
+		totalWeights += weights[i]
+	}
+
+	sum := 0.0
+	for i := 0; i < len(sse); i++ {
+		sum += (weights[i] / totalWeights) * sse[i]
 	}
 	return sum, nil
 }

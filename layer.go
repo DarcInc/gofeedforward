@@ -25,6 +25,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 package gofeedforward
 
 import (
@@ -55,7 +56,7 @@ func MakeCore(inputs, outputs int) Core {
 func (c Core) Randomize() {
 	for _, out := range c {
 		for i := range out {
-			out[i] = rand.Float64()
+			out[i] = rand.Float64() - 0.5
 		}
 	}
 }
@@ -84,6 +85,23 @@ func (c Core) OutputSize() int {
 	return len(c)
 }
 
+// Add adds two Core arrays of arrays together and returns their result as a separate
+// Core.  The cores must be of the same input and output size.
+func (c Core) Add(other Core) (Core, error) {
+	if c.InputSize() != other.InputSize() || c.OutputSize() != other.OutputSize() {
+		return nil, fmt.Errorf("Cannot add a %dx%d to a %dx%d core",
+			c.InputSize(), c.OutputSize(), other.InputSize(), other.OutputSize())
+	}
+
+	result := MakeCore(c.InputSize(), c.OutputSize())
+	for row := range c {
+		for col := range c[row] {
+			result[row][col] = c[row][col] + other[row][col]
+		}
+	}
+	return result, nil
+}
+
 // MakeLayer creates a new layer
 func MakeLayer(inputs, outputs int) Layer {
 	return Layer{Weights: MakeCore(inputs+1, outputs)}
@@ -94,11 +112,17 @@ func (l *Layer) Process(inputs []float64) ([]float64, error) {
 	l.Inputs = inputs
 
 	biasedInputs := append(inputs, 1.0)
-	outputs, _ := l.Weights.Process(biasedInputs)
+	outputs, err := l.Weights.Process(biasedInputs)
+
+	if err != nil {
+		return nil, err
+	}
+
 	for idx := range outputs {
 		outputs[idx] = Sigmoid(outputs[idx])
 	}
-	l.Outputs = outputs
+	l.Outputs = make([]float64, len(outputs))
+	copy(l.Outputs, outputs)
 
 	return outputs, nil
 }
@@ -106,4 +130,12 @@ func (l *Layer) Process(inputs []float64) ([]float64, error) {
 // Randomize randomizes the weights in a layer
 func (l *Layer) Randomize() {
 	l.Weights.Randomize()
+}
+
+// UpdateWeights updates the weights in a layer given the Core passed in.  The input size and
+// output size of the argument and the layer's weights must match.
+func (l *Layer) UpdateWeights(updates Core) error {
+	var err error
+	l.Weights, err = l.Weights.Add(updates)
+	return err
 }

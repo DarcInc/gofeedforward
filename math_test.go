@@ -69,5 +69,18 @@ func TestDotProductUnequal(t *testing.T) {
 	if err == nil {
 		t.Error("DotProduct did not report error, expected err got nil")
 	}
+}
 
+func TestSumOfSquaredError(t *testing.T) {
+	expected := []float64{1.0, 2.0}
+	actual := []float64{3.0, 3.0}
+
+	value, err := SumOfSquaredError(expected, actual)
+	if err != nil {
+		t.Errorf("Failed to calculate SSE: %v", err)
+	}
+
+	if outOfBoundsCheck(value.Combine(), 5.0, 0.001) {
+		t.Errorf("Expected error to be 5.0 but got %0.4f", value.Combine())
+	}
 }

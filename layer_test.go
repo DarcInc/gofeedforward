@@ -25,6 +25,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 package gofeedforward
 
 import "testing"
@@ -62,6 +63,25 @@ func TestRandomizeCore(t *testing.T) {
 				t.Errorf("Expected the default core value to be 0 but got %0.4f", v)
 			}
 		}
+	}
+}
+
+func TestCore_Add(t *testing.T) {
+	c1 := MakeCore(2, 2)
+	c2 := MakeCore(2, 2)
+	c1[0][0] = 1.0
+	c2[0][0] = 1.0
+	c1[0][1] = 2.0
+	c2[0][1] = 2.0
+	c1[1][0] = 3.0
+	c2[1][0] = 3.0
+	c1[1][1] = 4.0
+	c2[1][1] = 4.0
+
+	c3, _ := c1.Add(c2)
+	if outOfBoundsCheck(2.0, c3[0][0], 0.001) || outOfBoundsCheck(4.0, c3[0][1], 0.001) ||
+		outOfBoundsCheck(6.0, c3[1][0], 0.001) || outOfBoundsCheck(8.0, c3[1][1], 0.001) {
+		t.Error("Adding cores did not work out, total bummer")
 	}
 }
 
@@ -166,5 +186,29 @@ func TestLayer_ProcessKeepOutputs(t *testing.T) {
 	l.Process([]float64{1.0, 2.0})
 	if outOfBoundsCheck(0.5, l.Outputs[0], 0.001) {
 		t.Errorf("Expected 0.5 but got %d", l.Outputs[0])
+	}
+}
+
+func TestLayer_UpdateWeights(t *testing.T) {
+	l := MakeLayer(2, 1)
+	c := MakeCore(3, 1)
+	c.Randomize()
+
+	l.UpdateWeights(c)
+
+	if l.Weights.InputSize() != 3 {
+		t.Errorf("The weights in the layer do not have correct inputs after calling Update Weights")
+	}
+
+	if l.Weights.OutputSize() != 1 {
+		t.Errorf("The weights in the layer do not have the correct output size after calling Update Weights")
+	}
+
+	for rowIdx := range l.Weights {
+		for colIdx := range l.Weights[rowIdx] {
+			if outOfBoundsCheck(c[rowIdx][colIdx], l.Weights[rowIdx][colIdx], 0.001) {
+				t.Errorf("Failed to update layer weights")
+			}
+		}
 	}
 }
