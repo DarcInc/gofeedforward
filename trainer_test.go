@@ -90,11 +90,26 @@ func TestTrainer_TrainBatch(t *testing.T) {
 	net := MakeNetwork(2, 4, 1)
 	net.Randomize()
 
-	trainer := Trainer{BatchUpdate: true}
+	trainer := Trainer{BatchUpdate: true, ShuffleRounds: 3}
 	trainer.AddSimpleStoppingCriteria(50000, 0.001)
 
 	err := trainer.Train(&net, td)
 	if err != nil {
 		t.Errorf("Error during training: %v", err)
+	}
+}
+
+func TrainingData_Shuffle(t *testing.T) {
+	td := TrainingData{
+		TrainingDatum{Expected: []float64{0.0}, Inputs: []float64{0.0}},
+		TrainingDatum{Expected: []float64{1.0}, Inputs: []float64{1.0}},
+		TrainingDatum{Expected: []float64{2.0}, Inputs: []float64{2.0}},
+		TrainingDatum{Expected: []float64{3.0}, Inputs: []float64{3.0}},
+		TrainingDatum{Expected: []float64{4.0}, Inputs: []float64{4.0}},
+	}
+
+	td.Shuffle(10)
+	if td[0].Inputs[0] < td[1].Inputs[0] && td[1].Inputs[0] < td[2].Inputs[0] && td[2].Inputs[0] < td[3].Inputs[0] {
+		t.Error("The order was not disturbed")
 	}
 }

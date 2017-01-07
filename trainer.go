@@ -28,7 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package gofeedforward
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 // IterationCallback is a function prototype for a callback that, when registered, is called
 // at the end of every training iteration.  Multiple callbacks can be registered.
@@ -40,7 +43,8 @@ type TrainingCallback func(*Trainer)
 
 // Trainer is a network trainer that trains a network.  The Alpha is the learning rate
 // and has a default of 0.1.  BatchUpdate indicates if updates should occur in a batch or
-// with each presentation.
+// with each presentation.  ShuffleRounds indicates the number of rounds to shuffle the
+// training data before presenting it to the network.
 type Trainer struct {
 	endOfIterationHandlers []IterationCallback
 	startTrainingHandlers  []TrainingCallback
@@ -48,6 +52,7 @@ type Trainer struct {
 	requestTerminate       bool
 	Alpha                  float64
 	BatchUpdate            bool
+	ShuffleRounds          int
 }
 
 // TrainingDatum is a training example and is composed of a set of inputs and the
@@ -59,6 +64,19 @@ type TrainingDatum struct {
 
 // TrainingData is a collection of training datum.
 type TrainingData []TrainingDatum
+
+// Shuffle is a very crude shuffling algorithm which randomizes the order
+// of the training data.
+func (td TrainingData) Shuffle(rounds int) {
+	for roundIdx := 0; roundIdx < rounds; roundIdx++ {
+		for rowIdx := 0; rowIdx < len(td); rowIdx++ {
+			left := rand.Int() % len(td)
+			right := rand.Int() % len(td)
+
+			td[left], td[right] = td[right], td[left]
+		}
+	}
+}
 
 func calculateDeltas(nextDeltas []float64, layer Layer) []float64 {
 	thisDeltas := make([]float64, len(layer.Inputs))
@@ -93,6 +111,10 @@ func (t Trainer) OneIteration(net *Network, data TrainingData) (SumOfSquaredErro
 	for _, layer := range net.Layers {
 		deltas = append(deltas, make([]float64, layer.Weights.OutputSize()))
 		updates = append(updates, MakeCore(layer.Weights.InputSize(), layer.Weights.OutputSize()))
+	}
+
+	if t.ShuffleRounds > 0 {
+		data.Shuffle(t.ShuffleRounds)
 	}
 
 	total := SumOfSquaredErrors(make([]float64, net.OutputSize()))
