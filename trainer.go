@@ -35,7 +35,7 @@ import (
 
 // IterationCallback is a function prototype for a callback that, when registered, is called
 // at the end of every training iteration.  Multiple callbacks can be registered.
-type IterationCallback func(*Trainer, SumOfSquaredErrors, int, error)
+type IterationCallback func(*Trainer, SquaredError, int, error)
 
 // TrainingCallback is a function prototype for a callback that, when registered, is called
 // at the start or end of the training.  Multiple callbacks can be registered.
@@ -105,7 +105,7 @@ func calculateUpdate(layer Layer, deltas []float64, alpha float64) Core {
 
 // OneIteration conducts a training iteration.  It takes  a network and some training data and
 // returns the mean squared error array for all the network outputs.
-func (t Trainer) OneIteration(net *Network, data TrainingData) (SumOfSquaredErrors, error) {
+func (t Trainer) OneIteration(net *Network, data TrainingData) (SquaredError, error) {
 	deltas := [][]float64{}
 	updates := []Core{}
 	for _, layer := range net.Layers {
@@ -117,7 +117,7 @@ func (t Trainer) OneIteration(net *Network, data TrainingData) (SumOfSquaredErro
 		data.Shuffle(t.ShuffleRounds)
 	}
 
-	total := SumOfSquaredErrors(make([]float64, net.OutputSize()))
+	total := SquaredError(make([]float64, net.OutputSize()))
 
 	for _, datum := range data {
 		outputs, err := net.Process(datum.Inputs)
@@ -130,7 +130,7 @@ func (t Trainer) OneIteration(net *Network, data TrainingData) (SumOfSquaredErro
 				len(datum.Expected), len(outputs))
 		}
 
-		sse, _ := SumOfSquaredError(datum.Expected, outputs)
+		sse, _ := CalcError(datum.Expected, outputs)
 		total.Accumulate(sse)
 
 		for i := 0; i < len(datum.Expected); i++ {
@@ -190,7 +190,7 @@ func (t *Trainer) RequestTermination() {
 // than the minimum error.  If either of these conditions are met, then the callback
 // requests termination.
 func (t *Trainer) AddSimpleStoppingCriteria(maxIter int, minErr float64) {
-	t.AddIterationEndHandler(func(t *Trainer, mse SumOfSquaredErrors, iter int, err error) {
+	t.AddIterationEndHandler(func(t *Trainer, mse SquaredError, iter int, err error) {
 		if iter > maxIter {
 			t.RequestTermination()
 		}
@@ -243,4 +243,23 @@ func (t *Trainer) Train(net *Network, td TrainingData) (err error) {
 	}
 
 	return
+}
+
+// Evaluate a network returning the error values tht can then be averaged
+// or charted, or whatever is needed.
+func Evaluate(net Network, td TrainingData) (AllErrors, error) {
+	result := AllErrors{}
+	for _, datum := range td {
+		output, err := net.Process(datum.Inputs)
+		if err != nil {
+			return nil, err
+		}
+
+		se, err := CalcError(datum.Expected, output)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, se)
+	}
+	return result, nil
 }

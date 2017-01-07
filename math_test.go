@@ -71,16 +71,40 @@ func TestDotProductUnequal(t *testing.T) {
 	}
 }
 
-func TestSumOfSquaredError(t *testing.T) {
+func TestCalcError(t *testing.T) {
 	expected := []float64{1.0, 2.0}
 	actual := []float64{3.0, 3.0}
 
-	value, err := SumOfSquaredError(expected, actual)
+	value, err := CalcError(expected, actual)
 	if err != nil {
 		t.Errorf("Failed to calculate SSE: %v", err)
 	}
 
 	if outOfBoundsCheck(value.Combine(), 5.0, 0.001) {
 		t.Errorf("Expected error to be 5.0 but got %0.4f", value.Combine())
+	}
+}
+
+func TestAllErrors_Total(t *testing.T) {
+	ae := AllErrors{
+		SquaredError{1.0, 2.0},
+		SquaredError{3.0, 4.0},
+	}
+
+	se := ae.Total()
+	if outOfBoundsCheck(4.0, se[0], 0.001) || outOfBoundsCheck(6.0, se[1], 0.001) {
+		t.Errorf("Invalid total error")
+	}
+}
+
+func TestAllErrors_Average(t *testing.T) {
+	ae := AllErrors{
+		SquaredError{1.0, 2.0},
+		SquaredError{3.0, 4.0},
+	}
+
+	se := ae.Average()
+	if outOfBoundsCheck(2.0, se[0], 0.001) || outOfBoundsCheck(3.0, se[1], 0.001) {
+		t.Errorf("Invalid average")
 	}
 }

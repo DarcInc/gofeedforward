@@ -99,7 +99,7 @@ func TestTrainer_TrainBatch(t *testing.T) {
 	}
 }
 
-func TrainingData_Shuffle(t *testing.T) {
+func TestTrainingData_Shuffle(t *testing.T) {
 	td := TrainingData{
 		TrainingDatum{Expected: []float64{0.0}, Inputs: []float64{0.0}},
 		TrainingDatum{Expected: []float64{1.0}, Inputs: []float64{1.0}},
@@ -111,5 +111,31 @@ func TrainingData_Shuffle(t *testing.T) {
 	td.Shuffle(10)
 	if td[0].Inputs[0] < td[1].Inputs[0] && td[1].Inputs[0] < td[2].Inputs[0] && td[2].Inputs[0] < td[3].Inputs[0] {
 		t.Error("The order was not disturbed")
+	}
+}
+
+func TestEvaluate(t *testing.T) {
+	td := TrainingData{
+		TrainingDatum{Inputs: []float64{1.0, 0.0}, Expected: []float64{0.5, 0.5}},
+		TrainingDatum{Inputs: []float64{2.0, 0.0}, Expected: []float64{0.4, 0.4}},
+	}
+
+	network := MakeNetwork(2, 2)
+	allErrors, err := Evaluate(network, td)
+
+	if err != nil {
+		t.Errorf("Error evaluating network: %v", err)
+	}
+
+	if len(allErrors) != 2 {
+		t.Errorf("There should be two errors after evaluation")
+	}
+
+	if outOfBoundsCheck(0.0, allErrors[0][0], 0.001) || outOfBoundsCheck(0.0, allErrors[0][1], 0.001) {
+		t.Errorf("Error values are out of bounds")
+	}
+
+	if outOfBoundsCheck(0.01, allErrors[1][0], 0.001) || outOfBoundsCheck(0.01, allErrors[1][1], 0.001) {
+		t.Errorf("Errors were not what was expected.")
 	}
 }

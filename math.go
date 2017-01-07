@@ -33,9 +33,12 @@ import (
 	"math"
 )
 
-// SumOfSquaredErrors represents the squared sum of the errors between actual and
+// SquaredError represents the squared sum of the errors between actual and
 // estimated observations.
-type SumOfSquaredErrors []float64
+type SquaredError []float64
+
+// AllErrors is a complete set of squared errors.
+type AllErrors []SquaredError
 
 // Sigmoid is a standard sigmoid squashing function.  It will produce an output
 // value between 0.0 and 1.0.  Very large positive inputs will produce a value very near 1.0
@@ -60,14 +63,14 @@ func DotProduct(left, right []float64) (float64, error) {
 	return sum, nil
 }
 
-// SumOfSquaredError calculates the sum of squared errors for the expected and actual
+// CalcError calculates the sum of squared errors for the expected and actual
 // values.
-func SumOfSquaredError(expected, actual []float64) (SumOfSquaredErrors, error) {
+func CalcError(expected, actual []float64) (SquaredError, error) {
 	if len(expected) != len(actual) {
 		return nil, fmt.Errorf("Expected length = %d actual length = %d", len(expected), len(actual))
 	}
 
-	sum := SumOfSquaredErrors(make([]float64, len(expected)))
+	sum := SquaredError(make([]float64, len(expected)))
 	for i := 0; i < len(expected); i++ {
 		diff := expected[i] - actual[i]
 		sum[i] += diff * diff
@@ -77,21 +80,21 @@ func SumOfSquaredError(expected, actual []float64) (SumOfSquaredErrors, error) {
 }
 
 // Accumulate adds the sum of squares error to the given sum of squares error.
-func (sse SumOfSquaredErrors) Accumulate(new SumOfSquaredErrors) {
+func (sse SquaredError) Accumulate(new SquaredError) {
 	for i := 0; i < len(sse); i++ {
 		sse[i] += new[i]
 	}
 }
 
 // Average divides the sum of squares by a number of degrees of freedom.
-func (sse SumOfSquaredErrors) Average(nexample int) {
+func (sse SquaredError) Average(nexample int) {
 	for i := 0; i < len(sse); i++ {
 		sse[i] = sse[i] / float64(nexample)
 	}
 }
 
 // Combine returns the sum of the sum of squares error.
-func (sse SumOfSquaredErrors) Combine() float64 {
+func (sse SquaredError) Combine() float64 {
 	sum := 0.0
 	for i := 0; i < len(sse); i++ {
 		sum += sse[i]
@@ -101,7 +104,7 @@ func (sse SumOfSquaredErrors) Combine() float64 {
 
 // WeightedCombination adds together the components of the sum of squared errors using the
 // given weights.
-func (sse SumOfSquaredErrors) WeightedCombination(weights []float64) (float64, error) {
+func (sse SquaredError) WeightedCombination(weights []float64) (float64, error) {
 	if len(weights) != len(sse) {
 		return 0.0, fmt.Errorf("Number of weights %d do not equal number of values %d", len(weights), len(sse))
 	}
@@ -116,4 +119,22 @@ func (sse SumOfSquaredErrors) WeightedCombination(weights []float64) (float64, e
 		sum += (weights[i] / totalWeights) * sse[i]
 	}
 	return sum, nil
+}
+
+// Total computes the total error in a set of all errors.
+func (s AllErrors) Total() SquaredError {
+	sum := SquaredError(make([]float64, len(s[0])))
+	for _, val := range s {
+		sum.Accumulate(val)
+	}
+	return sum
+}
+
+// Average computes the average for each error in a set of errors.
+func (s AllErrors) Average() SquaredError {
+	avg := s.Total()
+	for idx := range avg {
+		avg[idx] = avg[idx] / float64(len(s))
+	}
+	return avg
 }
