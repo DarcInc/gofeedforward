@@ -139,3 +139,22 @@ func TestEvaluate(t *testing.T) {
 		t.Errorf("Errors were not what was expected.")
 	}
 }
+
+func TestTrainingData_Split(t *testing.T) {
+	td := TrainingData{
+		TrainingDatum{Inputs: []float64{1.0}, Expected: []float64{1.0}},
+		TrainingDatum{Inputs: []float64{2.0}, Expected: []float64{2.0}},
+		TrainingDatum{Inputs: []float64{3.0}, Expected: []float64{3.0}},
+		TrainingDatum{Inputs: []float64{4.0}, Expected: []float64{4.0}},
+		TrainingDatum{Inputs: []float64{5.0}, Expected: []float64{5.0}},
+	}
+
+	left, right, _ := td.Split(0.5)
+	if len(left) != 3 {
+		t.Errorf("There should have been 3 in the left side, but got: %d", len(left))
+	}
+
+	if len(right) != 2 {
+		t.Errorf("There should have been 2 in the right side, but got: %d", len(right))
+	}
+}

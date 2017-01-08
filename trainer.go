@@ -30,6 +30,7 @@ package gofeedforward
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 )
 
@@ -76,6 +77,18 @@ func (td TrainingData) Shuffle(rounds int) {
 			td[left], td[right] = td[right], td[left]
 		}
 	}
+}
+
+// Split divides the training data such that at least the given percentage winds up on the
+// left hand side and the remainder on the right hand side.  For example, if there are 15
+// elements in the training data and the fraction in 0.5, 8 will wind up in the left and
+// 7 will wind up in the right.
+func (td TrainingData) Split(fraction float64) (TrainingData, TrainingData, error) {
+	if fraction > 1.0 || fraction < 0.0 {
+		return nil, nil, fmt.Errorf("Spliting data requires a fraction between 0.0 and 1.0, not: %0.4f", fraction)
+	}
+	leftCount := int(math.Ceil(float64(len(td)) * fraction))
+	return td[:leftCount], td[leftCount:], nil
 }
 
 func calculateDeltas(nextDeltas []float64, layer Layer) []float64 {
