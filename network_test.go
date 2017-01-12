@@ -95,3 +95,40 @@ func TestNetwork_ProcessInvalidInputSize(t *testing.T) {
 		t.Error("Expected error to be non nil")
 	}
 }
+
+func TestMakeBestOfClassifier(t *testing.T) {
+	classifier := MakeBestOfClassifier([]string{"one", "two", "three"})
+
+	if cl, _ := classifier([]float64{0.1, 0.5, 0.2}); cl[0] != "two" {
+		t.Errorf("Expected 'two' but got '%s'", cl)
+	}
+
+	if cl, _ := classifier([]float64{0.9, 0.1, 0.8}); cl[0] != "one" {
+		t.Errorf("Expected 'one' but got '%s'", cl)
+	}
+
+	if cl, _ := classifier([]float64{0.9, 0.1, 0.9}); len(cl) != 1 {
+		t.Errorf("There should only be one value but got %d", len(cl))
+	}
+}
+
+func TestMakeThresholdClassifier(t *testing.T) {
+	classifier := MakeThresholdClassifier([]string{"one", "two", "three"}, 0.7)
+
+	if cl, _ := classifier([]float64{0.5, 0.6, 0.1}); len(cl) > 0 {
+		t.Errorf("There should be no classes returned but got %v", cl)
+	}
+
+	if cl, _ := classifier([]float64{0.71, 0.72, 0.73}); len(cl) != 3 {
+		t.Errorf("There should have been three classes returned by got %v", cl)
+	}
+
+	cl, _ := classifier([]float64{0.5, 0.71, 0.72})
+	if cl[0] != "two" {
+		t.Errorf("Expected 'two' but got %s", cl[0])
+	}
+
+	if cl[1] != "three" {
+		t.Errorf("Expected 'three' but got '%s'", cl[1])
+	}
+}

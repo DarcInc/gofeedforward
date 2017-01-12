@@ -79,6 +79,42 @@ func (td TrainingData) Shuffle(rounds int) {
 	}
 }
 
+// Scale takes a set of input columns and scales them from 0 to 1.0 where 0 is
+// the minimum value found in the collection of columns and 1.0 is the maximum
+// value.  For example, Scale(0, 2) will scale the contents of the training data
+// inputs in column 0 and column 2, so that the max of column 0 or 2 is 1.0 and
+// the min of either column 0 or 2 is 0.0.
+func (td TrainingData) Scale(cols ...int) error {
+	for _, col := range cols {
+		if col >= len(td[0].Inputs) || col < 0 {
+			return fmt.Errorf("Unable to scale column %d", col)
+		}
+	}
+
+	low := td[0].Inputs[cols[0]]
+	high := td[0].Inputs[cols[0]]
+
+	for idx := range td {
+		for _, col := range cols {
+			if td[idx].Inputs[col] < low {
+				low = td[idx].Inputs[col]
+			}
+
+			if td[idx].Inputs[col] > high {
+				high = td[idx].Inputs[col]
+			}
+		}
+	}
+
+	for idx := range td {
+		for _, col := range cols {
+			td[idx].Inputs[col] = (td[idx].Inputs[col] - low) / (high - low)
+		}
+	}
+
+	return nil
+}
+
 // Split divides the training data such that at least the given percentage winds up on the
 // left hand side and the remainder on the right hand side.  For example, if there are 15
 // elements in the training data and the fraction in 0.5, 8 will wind up in the left and

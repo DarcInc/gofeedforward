@@ -49,6 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // err := trainer.Train(&net, td)
 package gofeedforward
 
+import "fmt"
+
 // Network represents a neural network.  It is composed of its layers and the
 // output from the last inputs presented.  The last output value is important
 // training but may also be useful in other contexts.
@@ -56,6 +58,8 @@ type Network struct {
 	Layers  []Layer
 	Outputs []float64
 }
+
+type BasicClassifier func([]float64) ([]string, error)
 
 // MakeNetwork returns a neural network with the given size layers.  For example, a 2, 4, 1
 // network will have two inputs, 4 hidden layer neurons, and 1 output neurons.
@@ -108,4 +112,54 @@ func (n Network) InputSize() int {
 // OutputSize returns the network output size.
 func (n Network) OutputSize() int {
 	return n.Layers[len(n.Layers)-1].Weights.OutputSize()
+}
+
+func (n *Network) Classify(inputs []float64, classifer BasicClassifier) ([]string, error) {
+	rawValues, err := n.Process(inputs)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return classifer(rawValues)
+}
+
+// MakeBestOfClassifier creates a classifier that translates a class to the highest scoring
+// value in the array of values passed in.  Only returns one value.
+func MakeBestOfClassifier(classes []string) BasicClassifier {
+	return func(rawValues []float64) ([]string, error) {
+		if len(rawValues) != len(classes) {
+			return nil, fmt.Errorf("Unable to classify becuase there are %d outputs and %d classes", len(rawValues), len(classes))
+		}
+
+		maxIdx := 0
+		maxValue := rawValues[0]
+		for idx, val := range rawValues {
+			if val > maxValue {
+				maxIdx = idx
+				maxValue = val
+			}
+		}
+
+		return []string{classes[maxIdx]}, nil
+	}
+}
+
+// MakeThresholdClassifier creates a classifier that returns a class for each input above
+// the given threshold.  It can return 0, 1 or many classes, depending on how many of the
+// inputs are above the threshold.
+func MakeThresholdClassifier(classes []string, threshold float64) BasicClassifier {
+	return func(rawValues []float64) ([]string, error) {
+		if len(rawValues) != len(classes) {
+			return nil, fmt.Errorf("Unable to classify becuase there are %d outputs and %d classes", len(rawValues), len(classes))
+		}
+
+		result := []string{}
+		for idx, val := range rawValues {
+			if val > threshold {
+				result = append(result, classes[idx])
+			}
+		}
+		return result, nil
+	}
 }

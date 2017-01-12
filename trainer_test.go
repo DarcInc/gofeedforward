@@ -158,3 +158,45 @@ func TestTrainingData_Split(t *testing.T) {
 		t.Errorf("There should have been 2 in the right side, but got: %d", len(right))
 	}
 }
+
+func TestTrainingData_Scale(t *testing.T) {
+	td := TrainingData{
+		TrainingDatum{Inputs: []float64{1.0, 5.0, 1.0}, Expected: []float64{1.0}},
+		TrainingDatum{Inputs: []float64{2.0, 4.0, 10.0}, Expected: []float64{2.0}},
+		TrainingDatum{Inputs: []float64{3.0, 3.0, 3.0}, Expected: []float64{3.0}},
+		TrainingDatum{Inputs: []float64{4.0, 2.0, 5.0}, Expected: []float64{4.0}},
+		TrainingDatum{Inputs: []float64{5.0, 1.0, 7.0}, Expected: []float64{5.0}},
+	}
+
+	if err := td.Scale(0, 1); err != nil {
+		t.Errorf("Failed to scale values: %v", err)
+	}
+
+	if err := td.Scale(2); err != nil {
+		t.Errorf("Faled to scale values: %v", err)
+	}
+
+	if outOfBoundsCheck(0.0, td[0].Inputs[0], 0.001) {
+		t.Errorf("Expected low value to be 0.0 but got %0.4f", td[0].Inputs[0])
+	}
+
+	if outOfBoundsCheck(1.0, td[4].Inputs[0], 0.001) {
+		t.Errorf("Expected high value to be 1.0 but got %0.4f", td[4].Inputs[0])
+	}
+
+	if outOfBoundsCheck(0.0, td[4].Inputs[1], 0.001) {
+		t.Errorf("Expected low value to be 0.0 but got %0.4f", td[0].Inputs[0])
+	}
+
+	if outOfBoundsCheck(1.0, td[0].Inputs[1], 0.001) {
+		t.Errorf("Expected high value to be 1.0 but got %0.4f", td[4].Inputs[0])
+	}
+
+	if outOfBoundsCheck(0.0, td[0].Inputs[2], 0.001) {
+		t.Errorf("Expected low value to be 0.0, but got %0.4f", td[0].Inputs[2])
+	}
+
+	if outOfBoundsCheck(1.0, td[1].Inputs[2], 0.001) {
+		t.Errorf("Expected high value to be 1.0, but got %0.4f", td[0].Inputs[2])
+	}
+}
