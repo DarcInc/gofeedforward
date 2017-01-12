@@ -312,3 +312,38 @@ func Evaluate(net Network, td TrainingData) (AllErrors, error) {
 	}
 	return result, nil
 }
+
+func ClassificationError(net Network, td TrainingData, classifier BasicClassifier) (float64, error) {
+	failed := 0.0
+
+	for _, datum := range td {
+		expected, err := classifier(datum.Expected)
+		if err != nil {
+			return 0.0, err
+		}
+
+		outputs, err := net.Process(datum.Inputs)
+		if err != nil {
+			return 0.0, err
+		}
+
+		actual, err := classifier(outputs)
+		if err != nil {
+			return 0.0, err
+		}
+
+		if len(expected) != len(actual) {
+			failed += 1.0
+			continue
+		}
+
+		for idx := range expected {
+			if actual[idx] != expected[idx] {
+				failed += 1.0
+				continue
+			}
+		}
+	}
+
+	return failed / float64(len(td)), nil
+}
