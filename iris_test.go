@@ -2,7 +2,9 @@ package gofeedforward
 
 import "testing"
 
-func TestIrisTraining(t *testing.T) {
+// Example demonstrates how to use the package to train a classifer on the
+// venerable Iris data set.
+func Example(t *testing.T) {
 	IrisData.Scale(0, 1, 2)
 	IrisData.Scale(3)
 
@@ -18,7 +20,7 @@ func TestIrisTraining(t *testing.T) {
 		t.Errorf("Failed to split test and valiation: %v", err)
 	}
 
-	trainer := Trainer{Alpha: 0.1, BatchUpdate: true}
+	trainer := Trainer{Alpha: 0.1, BatchUpdate: true, ShuffleRounds: 1}
 	trainer.AddSimpleStoppingCriteria(10000, 0.1)
 	trainer.Train(&n, training)
 
