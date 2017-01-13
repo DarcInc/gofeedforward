@@ -294,8 +294,9 @@ func (t *Trainer) Train(net *Network, td TrainingData) (err error) {
 	return
 }
 
-// Evaluate a network returning the error values tht can then be averaged
-// or charted, or whatever is needed.
+// Evaluate a network returning the error values that can then be averaged
+// or analyzed.  It executes the network for each example in the training
+// data, returning the error for each example.
 func Evaluate(net Network, td TrainingData) (AllErrors, error) {
 	result := AllErrors{}
 	for _, datum := range td {
@@ -313,6 +314,11 @@ func Evaluate(net Network, td TrainingData) (AllErrors, error) {
 	return result, nil
 }
 
+// ClassificationError calculates the error rate for a network that is used
+// as a classifer.  The network and testing data are passed as the first two
+// arguments.  The third argument is a classifer to translate the outputs to
+// a specific class.  What is compared is the result of classifying the expected
+// outputs vs classifying the actual outputs.
 func ClassificationError(net Network, td TrainingData, classifier BasicClassifier) (float64, error) {
 	failed := 0.0
 

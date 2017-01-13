@@ -37,7 +37,9 @@ import (
 // estimated observations.
 type SquaredError []float64
 
-// AllErrors is a complete set of squared errors.
+// AllErrors is the collection of errors when produced when the network is
+// applied to a data set.  It is the raw errors from each example presented
+// to the network.
 type AllErrors []SquaredError
 
 // Sigmoid is a standard sigmoid squashing function.  It will produce an output
@@ -121,7 +123,8 @@ func (sse SquaredError) WeightedCombination(weights []float64) (float64, error) 
 	return sum, nil
 }
 
-// Total computes the total error in a set of all errors.
+// Total computes the total error in a set of all errors.  It computes
+// the sum for each network output, returning the array of sums.
 func (s AllErrors) Total() SquaredError {
 	sum := SquaredError(make([]float64, len(s[0])))
 	for _, val := range s {
@@ -130,7 +133,8 @@ func (s AllErrors) Total() SquaredError {
 	return sum
 }
 
-// Average computes the average for each error in a set of errors.
+// Average computes the average for each error in a collection of
+// errors for each network output.
 func (s AllErrors) Average() SquaredError {
 	avg := s.Total()
 	for idx := range avg {

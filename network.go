@@ -59,6 +59,10 @@ type Network struct {
 	Outputs []float64
 }
 
+// BasicClassifier is the signature for a classifer that turns an array of
+// network outputs into an array of class names.  It returns an array of
+// class names to cover the possiblity that a valid translation of network
+// outputs to classes may produce mutliple classes.
 type BasicClassifier func([]float64) ([]string, error)
 
 // MakeNetwork returns a neural network with the given size layers.  For example, a 2, 4, 1
@@ -104,16 +108,20 @@ func (n *Network) Process(inputs []float64) ([]float64, error) {
 	return n.Outputs, nil
 }
 
-// InputSize returns the network input size.
+// InputSize returns the network input size.  When presenting data
+// to the network, the array of values must be exactly this size.
 func (n Network) InputSize() int {
 	return n.Layers[0].Weights.InputSize() - 1
 }
 
-// OutputSize returns the network output size.
+// OutputSize returns the network output size.  The network will
+// always return a vector of this size.
 func (n Network) OutputSize() int {
 	return n.Layers[len(n.Layers)-1].Weights.OutputSize()
 }
 
+// Classify executes the network returning the output as a class
+// member instead of a raw numeric value.
 func (n *Network) Classify(inputs []float64, classifer BasicClassifier) ([]string, error) {
 	rawValues, err := n.Process(inputs)
 
